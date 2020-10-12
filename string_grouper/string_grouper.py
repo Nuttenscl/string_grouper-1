@@ -15,7 +15,7 @@ DEFAULT_MAX_N_MATCHES: int = 20
 DEFAULT_MIN_SIMILARITY: float = 0.8  # Minimum cosine similarity for an item to be considered a match
 DEFAULT_N_PROCESSES: int = multiprocessing.cpu_count() - 1
 DEFAULT_IGNORE_CASE: bool = True  # ignores case by default
-
+DEFAULT_ADD_WORDS:bool = False 
 # High level functions
 
 
@@ -90,6 +90,7 @@ class StringGrouperConfig(NamedTuple):
     min_similarity: float = DEFAULT_MIN_SIMILARITY
     number_of_processes: int = DEFAULT_N_PROCESSES
     ignore_case: bool = DEFAULT_IGNORE_CASE
+    add_words: bool = DEFAULT_ADD_WORDS
 
 
 def validate_is_fit(f):
@@ -135,7 +136,7 @@ class StringGrouper(object):
         # After the StringGrouper is build, _matches_list will contain the indices and similarities of two matches
         self._matches_list: pd.DataFrame = pd.DataFrame()
 
-    def n_grams(self, string: str, add_words: bool=False) -> List[str]:
+    def n_grams(self, string: str) -> List[str]:
         """
         :param string: string to create ngrams from
         :param add_words: boolean. Add words to list of ngrams
@@ -143,12 +144,16 @@ class StringGrouper(object):
         """
         ngram_size = self._config.ngram_size
         regex_pattern = self._config.regex
+        add_words = self._config.add_words
+
         if self._config.ignore_case and string is not None:
             string = string.lower()  # lowercase to ignore all case
         string = re.sub(regex_pattern, r'', string)
+        words = string.split(' ')
+        string = re.sub(r'\s', r'', string)
         n_grams = zip(*[string[i:] for i in range(ngram_size)])
         if add_words==True:
-            return string.split(' ') + [''.join(ngram) for ngram in ngrams]
+            return words + [''.join(ngram) for ngram in n_grams]
         else:
             return [''.join(n_gram) for n_gram in n_grams]
 
